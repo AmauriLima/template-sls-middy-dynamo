@@ -1,0 +1,85 @@
+org: amaurilima
+service: template-sls-middy
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  architecture: arm64
+  region: sa-east-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: s3:PutObject
+          Resource: arn:aws:s3:::template-middy-sls/*
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:DeleteItem
+            - dynamodb:GetItem
+            - dynamodb:Scan
+            - dynamodb:UpdateItem
+          Resource:
+            - Fn::GetAtt: [Table, Arn]
+
+package:
+  individually: true
+
+build:
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: false
+    exclude:
+      - '@aws-sdk/*'
+
+functions:
+  upload:
+    handler: src/main/functions/upload.handler
+    events:
+      - httpApi:
+          path: /upload
+          method: POST
+  users:
+    handler: src/main/functions/users.handler
+    events:
+      - httpApi:
+          path: /users
+          method: Any
+      - httpApi:
+          path: /users/{param+}
+          method: Any
+
+resources:
+  Resources:
+    Table:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: table
+        BillingMode: PAY_PER_REQUEST
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+          - AttributeName: GSI1PK
+            AttributeType: S
+          - AttributeName: GSI1SK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: GSI1
+            KeySchema:
+              - AttributeName: GSI1PK
+                KeyType: HASH
+              - AttributeName: GSI1SK
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALl
+
