@@ -3,9 +3,10 @@ export type IParams = Record<string, string>;
 export type IHeaders = Record<string, string>;
 
 export interface IHttpRequest<TBody extends IBody | undefined, TParams extends IParams | undefined> {
-  body?: TBody;
+  body: TBody;
+  params: TParams;
   headers?: IHeaders;
-  params?: TParams;
+  userId?: string;
 }
 
 export interface IHttpResponse {

@@ -6,6 +6,19 @@ provider:
   runtime: nodejs20.x
   architecture: arm64
   region: sa-east-1
+  environment:
+    COGNITO_CLIENT_ID:
+      Ref: TemplateUserPoolClient
+    COGNITO_USER_POOL_ID:
+      Ref: TemplateUserPool
+  httpApi:
+    authorizers:
+      CognitoAuthorizer:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl: !GetAtt TemplateUserPool.ProviderURL
+        audience:
+          - Ref: TemplateUserPoolClient
   iam:
     role:
       statements:
@@ -21,7 +34,10 @@ provider:
             - dynamodb:UpdateItem
           Resource:
             - Fn::GetAtt: [Table, Arn]
-
+        - Effect: Allow
+          Action:
+            - cognito-idp:AdminGetUser
+          Resource: !GetAtt TemplateUserPool.Arn
 package:
   individually: true
 
@@ -34,52 +50,59 @@ build:
       - '@aws-sdk/*'
 
 functions:
-  upload:
-    handler: src/main/functions/upload.handler
+  cognito-custom-message:
+    handler: src/main/functions/auth/custom-message.handler
+    events:
+      - cognitoUserPool:
+          pool: template-UserPool
+          trigger: CustomMessage
+          existing: true
+          forceDeploy: true
+  sign-up:
+    handler: src/main/functions/auth/sign-up.handler
     events:
       - httpApi:
-          path: /upload
+          path: /auth/sign-up
           method: POST
-  users:
-    handler: src/main/functions/users.handler
+  sign-in:
+    handler: src/main/functions/auth/sign-in.handler
     events:
       - httpApi:
-          path: /users
-          method: Any
+          path: /auth/sign-in
+          method: POST
+  refresh-token:
+    handler: src/main/functions/auth/refresh-token.handler
+    events:
       - httpApi:
-          path: /users/{param+}
-          method: Any
+          path: /auth/refresh-token
+          method: POST
+  account-confirmation:
+    handler: src/main/functions/auth/account-confirmation.handler
+    events:
+      - httpApi:
+          path: /auth/account-confirmation
+          method: POST
+  forgot-password:
+    handler: src/main/functions/auth/forgot-password.handler
+    events:
+      - httpApi:
+          path: /auth/forgot-password
+          method: POST
+  reset-password:
+    handler: src/main/functions/auth/reset-password.handler
+    events:
+      - httpApi:
+          path: /auth/reset-password
+          method: POST
+  profile:
+    handler: src/main/functions/auth/profile.handler
+    events:
+      - httpApi:
+          path: /auth/profile
+          method: GET
+          authorizer: CognitoAuthorizer
 
 resources:
-  Resources:
-    Table:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: table
-        BillingMode: PAY_PER_REQUEST
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true
-        AttributeDefinitions:
-          - AttributeName: PK
-            AttributeType: S
-          - AttributeName: SK
-            AttributeType: S
-          - AttributeName: GSI1PK
-            AttributeType: S
-          - AttributeName: GSI1SK
-            AttributeType: S
-        KeySchema:
-          - AttributeName: PK
-            KeyType: HASH
-          - AttributeName: SK
-            KeyType: RANGE
-        GlobalSecondaryIndexes:
-          - IndexName: GSI1
-            KeySchema:
-              - AttributeName: GSI1PK
-                KeyType: HASH
-              - AttributeName: GSI1SK
-                KeyType: RANGE
-            Projection:
-              ProjectionType: ALl
-
+  - ${file(./resources/dynamodb/table.yml)}
+  - ${file(./resources/cognito/user-pool.yml)}
+  - ${file(./resources/cognito/user-pool-client.yml)}

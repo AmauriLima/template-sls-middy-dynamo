@@ -28,7 +28,8 @@ export function makeHandler(
       return controller.handler({
         body: event.body,
         headers: sanitizeObject(event.headers),
-        params: sanitizeObject(event.pathParameters)
+        params: sanitizeObject(event.pathParameters),
+        userId: event.requestContext.authorizer?.jwt.claims.sub
       });
     });
 }

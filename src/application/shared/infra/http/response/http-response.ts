@@ -7,7 +7,7 @@ interface IHttpResponseContructor {
 }
 
 export class HttpResponse {
-  constructor(private response: IHttpResponseContructor) {}
+  constructor(private response?: IHttpResponseContructor) {}
 
   ok(): IHttpResponse {
     return {
@@ -26,7 +26,7 @@ export class HttpResponse {
   noContent(): IHttpResponse {
     return {
       statusCode: IHttpStatusCode.NO_CONTENT,
-      headers: this.response.headers,
+      headers: this.response?.headers,
     }
   };
 }

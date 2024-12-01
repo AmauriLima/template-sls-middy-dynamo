@@ -1,0 +1,15 @@
+Resources:
+  TemplateUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: 'template-UserPoolClient'
+      UserPoolId:
+        Ref: TemplateUserPool
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      AccessTokenValidity: 3
+      RefreshTokenValidity: 168 # 7 days
+      TokenValidityUnits:
+        AccessToken: hours
+        RefreshToken: hours

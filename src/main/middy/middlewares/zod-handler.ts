@@ -10,11 +10,11 @@ export interface ZodSchemas {
 
 export function zodHandler(schemas?: ZodSchemas): MiddlewareObj<APIGatewayProxyEventV2> {
   return {
-    after: (request) => {
-      const body = schemas?.body ? schemas.body.parse(request.event.body) : request.event.body;
+    before: (request) => {
+      const body = schemas?.body ? schemas.body.parse(request.event.body) : request.event.pathParameters;
       const params = schemas?.params ? schemas.params.parse(request.event.pathParameters) : request.event.pathParameters;
 
-      request.event.body = JSON.stringify(body);
+      (request.event as any).body = body;
       request.event.pathParameters = params;
     },
     onError: (request) => {
