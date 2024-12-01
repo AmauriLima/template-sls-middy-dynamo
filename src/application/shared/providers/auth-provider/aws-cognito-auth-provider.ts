@@ -1,3 +1,4 @@
+import { env } from "@/application/config/env";
 import { AccountConfirmationSchemaType } from "@/application/modules/auth/use-cases/account-confirmation/account-confirmation-dto";
 import { ForgotPasswordSchemaType } from "@/application/modules/auth/use-cases/forgot-password/forgot-password-dto";
 import { RefreshTokenSchemaType } from "@/application/modules/auth/use-cases/refresh-token/refresh-token-dto";
@@ -10,19 +11,20 @@ import { InternalServerHTTPError } from "../../infra/http/errors/internal-server
 import { NotFoundHTTPError } from "../../infra/http/errors/not-found-http-error";
 import { UnauthorizedHTTPError } from "../../infra/http/errors/unauthorized-http-error";
 import type { AuthProvider, GetUserParams, GetUserResponse, Profile, RefreshTokenResponse, SignInResponse, SignUpResponse } from "./auth-provider";
-
+import { getSecretHash } from "./utils/get-secret-hash";
 
 export class AwsCognitoAuthProvider implements AuthProvider {
   constructor(
     private readonly cognito: CognitoIdentityProviderClient = cognitoClient,
-    private readonly clientId: string = process.env.COGNITO_CLIENT_ID!,
-    private readonly poolId: string = process.env.COGNITO_USER_POOL_ID!,
+    private readonly clientId: string = env.COGNITO_CLIENT_ID!,
+    private readonly poolId: string = env.COGNITO_USER_POOL_ID!,
   ) {}
 
   async resetPassword(params: ResetPasswordSchemaType): Promise<void> {
     const { email, code, newPassword } = params;
     const command = new ConfirmForgotPasswordCommand({
       ClientId: this.clientId,
+      SecretHash: getSecretHash(email),
       Username: email,
       ConfirmationCode: code,
       Password: newPassword,
@@ -34,6 +36,7 @@ export class AwsCognitoAuthProvider implements AuthProvider {
   async forgotPassword(params: ForgotPasswordSchemaType): Promise<void> {
     const { email } = params;
     const command = new ForgotPasswordCommand({
+      SecretHash: getSecretHash(email),
       ClientId: this.clientId,
       Username: email,
     });
@@ -104,6 +107,7 @@ export class AwsCognitoAuthProvider implements AuthProvider {
       AuthParameters: {
         USERNAME: email,
         PASSWORD: password,
+        SECRET_HASH: getSecretHash(email),
       }
     });
 
@@ -124,6 +128,7 @@ export class AwsCognitoAuthProvider implements AuthProvider {
 
     const command = new SignUpCommand({
       ClientId: this.clientId,
+      SecretHash: getSecretHash(email),
       Username: email,
       Password: password,
       UserAttributes: [
@@ -131,6 +136,8 @@ export class AwsCognitoAuthProvider implements AuthProvider {
         { Name: 'family_name', Value: family_name },
       ],
     });
+
+    console.log(command.input);
 
     const { UserSub } = await this.cognito.send(command);
 
@@ -150,6 +157,7 @@ export class AwsCognitoAuthProvider implements AuthProvider {
 
     const command = new ConfirmSignUpCommand({
       ClientId: this.clientId,
+      SecretHash: getSecretHash(email),
       Username: email,
       ConfirmationCode: code,
     });

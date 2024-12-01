@@ -18,6 +18,8 @@ export function errorHandler(): MiddlewareObj<APIGatewayProxyEventV2> {
           }
         }
       } else {
+        console.log(request);
+
         request.response = {
           ...request.response,
           statusCode: 500,

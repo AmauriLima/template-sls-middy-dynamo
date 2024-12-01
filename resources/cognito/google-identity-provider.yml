@@ -1,0 +1,16 @@
+Resources:
+  GoogleIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      UserPoolId: !Ref UserPool
+      AttributeMapping:
+        email: email
+        given_name: given_name
+        family_name: family_name
+        verified_email: verified_email
+      ProviderName: Google
+      ProviderType: Google
+      ProviderDetails:
+        authorize_scopes: email profile openid
+        client_id: ${env:GOOGLE_CLIENT_ID}
+        client_secret: ${env:GOOGLE_CLIENT_SECRET}

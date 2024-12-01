@@ -1,8 +1,8 @@
 Resources:
-  TemplateUserPool:
+  UserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: template-UserPool
+      UserPoolName: UserPool
       MfaConfiguration: OFF
       AutoVerifiedAttributes:
         - email

@@ -29,7 +29,7 @@ export function makeHandler(
         body: event.body,
         headers: sanitizeObject(event.headers),
         params: sanitizeObject(event.pathParameters),
-        userId: event.requestContext.authorizer?.jwt.claims.sub
+        userId: event.requestContext.authorizer?.jwt?.claims?.sub
       });
     });
 }

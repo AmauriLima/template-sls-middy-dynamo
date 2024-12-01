@@ -1,13 +1,28 @@
 Resources:
-  TemplateUserPoolClient:
+  UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
+    DependsOn:
+      - GoogleIdentityProvider
     Properties:
-      ClientName: 'template-UserPoolClient'
+      ClientName: 'UserPoolClient'
       UserPoolId:
-        Ref: TemplateUserPool
+        Ref: UserPool
       ExplicitAuthFlows:
         - ALLOW_USER_PASSWORD_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - email
+        - profile
+        - openid
+      CallbackURLs:
+        - http://localhost:5173/auth/callback
+      SupportedIdentityProviders:
+        - Google
+        - COGNITO
+      GenerateSecret: true
       AccessTokenValidity: 3
       RefreshTokenValidity: 168 # 7 days
       TokenValidityUnits:

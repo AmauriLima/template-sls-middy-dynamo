@@ -1,5 +1,5 @@
 org: amaurilima
-service: template-sls-middy
+service: template-sls-login-social
 
 provider:
   name: aws
@@ -8,17 +8,18 @@ provider:
   region: sa-east-1
   environment:
     COGNITO_CLIENT_ID:
-      Ref: TemplateUserPoolClient
+      Ref: UserPoolClient
     COGNITO_USER_POOL_ID:
-      Ref: TemplateUserPool
+      Ref: UserPool
+    COGNITO_CLIENT_SECRET: !GetAtt UserPoolClient.ClientSecret
   httpApi:
     authorizers:
       CognitoAuthorizer:
         type: jwt
         identitySource: $request.header.Authorization
-        issuerUrl: !GetAtt TemplateUserPool.ProviderURL
+        issuerUrl: !GetAtt UserPool.ProviderURL
         audience:
-          - Ref: TemplateUserPoolClient
+          - Ref: UserPoolClient
   iam:
     role:
       statements:
@@ -37,7 +38,7 @@ provider:
         - Effect: Allow
           Action:
             - cognito-idp:AdminGetUser
-          Resource: !GetAtt TemplateUserPool.Arn
+          Resource: !GetAtt UserPool.Arn
 package:
   individually: true
 
@@ -54,7 +55,7 @@ functions:
     handler: src/main/functions/auth/custom-message.handler
     events:
       - cognitoUserPool:
-          pool: template-UserPool
+          pool: UserPool
           trigger: CustomMessage
           existing: true
           forceDeploy: true
@@ -105,4 +106,6 @@ functions:
 resources:
   - ${file(./resources/dynamodb/table.yml)}
   - ${file(./resources/cognito/user-pool.yml)}
+  - ${file(./resources/cognito/user-pool-domain.yml)}
+  - ${file(./resources/cognito/google-identity-provider.yml)}
   - ${file(./resources/cognito/user-pool-client.yml)}
