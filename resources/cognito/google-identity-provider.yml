@@ -7,7 +7,7 @@ Resources:
         email: email
         given_name: given_name
         family_name: family_name
-        verified_email: verified_email
+        email_verified: email_verified
       ProviderName: Google
       ProviderType: Google
       ProviderDetails:

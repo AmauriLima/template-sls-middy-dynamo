@@ -12,7 +12,13 @@ provider:
     COGNITO_USER_POOL_ID:
       Ref: UserPool
     COGNITO_CLIENT_SECRET: !GetAtt UserPoolClient.ClientSecret
+    COGNITO_POOL_DOMAIN: !Join ['', ['https://', !Ref UserPoolDomain, '.auth.${self:provider.region}.amazoncognito.com']]
   httpApi:
+    cors:
+      allowedOrigins:
+        - http://localhost:5173
+      allowedHeaders: '*'
+      allowedMethods: '*'
     authorizers:
       CognitoAuthorizer:
         type: jwt
@@ -57,6 +63,20 @@ functions:
       - cognitoUserPool:
           pool: UserPool
           trigger: CustomMessage
+          existing: true
+          forceDeploy: true
+  exchange-code:
+    handler: src/main/functions/auth/exchange-code.handler
+    events:
+      - httpApi:
+          path: /auth/exchange
+          method: POST
+  pre-sign-up-trigger:
+    handler: src/main/functions/auth/pre-sign-up-trigger.handler
+    events:
+      - cognitoUserPool:
+          pool: UserPool
+          trigger: PreSignUp
           existing: true
           forceDeploy: true
   sign-up:
