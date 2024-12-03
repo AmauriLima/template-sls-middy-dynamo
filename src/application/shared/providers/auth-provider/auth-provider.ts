@@ -35,6 +35,26 @@ export type GetUserResponse = {
 };
 
 
+export interface CreateUserParams {
+  userPoolId: string;
+  email: string;
+  givenName: string;
+  familyName: string;
+}
+
+export interface GetUserByEmailParams {
+  userPoolId: string;
+  email: string;
+  paginationToken?: string;
+}
+
+
+export interface LinkProviderParams {
+  userPoolId: string;
+  nativeUserId: string;
+  providerName: string;
+  providerUserId: string;
+}
 
 
 export interface AuthProvider {
@@ -43,6 +63,9 @@ export interface AuthProvider {
   refreshToken(params: RefreshTokenSchemaType): Promise<RefreshTokenResponse>;
   accountConfirmation(params: AccountConfirmationSchemaType): Promise<void>;
   getUser(params: GetUserParams): Promise<GetUserResponse>;
-  forgotPassword(params: ForgotPasswordSchemaType): Promise<void>
-  resetPassword(params: ResetPasswordSchemaType): Promise<void>
+  forgotPassword(params: ForgotPasswordSchemaType): Promise<void>;
+  resetPassword(params: ResetPasswordSchemaType): Promise<void>;
+  createUser(params: CreateUserParams): Promise<string>;
+  getUserByEmail(params: GetUserByEmailParams): Promise<string | undefined>;
+  linkProvider(params: LinkProviderParams): Promise<void>;
 }

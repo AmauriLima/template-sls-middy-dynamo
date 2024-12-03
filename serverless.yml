@@ -44,7 +44,11 @@ provider:
         - Effect: Allow
           Action:
             - cognito-idp:AdminGetUser
+            - cognito-idp:AdminCreateUser
+            - cognito-idp:ListUsers
+            - cognito-idp:AdminLinkProviderForUser
           Resource: !GetAtt UserPool.Arn
+
 package:
   individually: true
 

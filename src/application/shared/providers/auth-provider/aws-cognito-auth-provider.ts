@@ -5,12 +5,12 @@ import { RefreshTokenSchemaType } from "@/application/modules/auth/use-cases/ref
 import { ResetPasswordSchemaType } from "@/application/modules/auth/use-cases/reset-password/reset-password-dto";
 import { SignInSchemaType } from "@/application/modules/auth/use-cases/sign-in/sign-in-dto";
 import { SignUpSchemaType } from "@/application/modules/auth/use-cases/sign-up/sign-up-dto";
-import { AdminGetUserCommand, AuthFlowType, CognitoIdentityProviderClient, ConfirmForgotPasswordCommand, ConfirmSignUpCommand, ForgotPasswordCommand, InitiateAuthCommand, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { AdminCreateUserCommand, AdminGetUserCommand, AdminLinkProviderForUserCommand, AuthFlowType, CognitoIdentityProviderClient, ConfirmForgotPasswordCommand, ConfirmSignUpCommand, ForgotPasswordCommand, InitiateAuthCommand, ListUsersCommand, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
 import { cognitoClient } from "../../infra/clients/cognito-client";
 import { InternalServerHTTPError } from "../../infra/http/errors/internal-server-http-error";
 import { NotFoundHTTPError } from "../../infra/http/errors/not-found-http-error";
 import { UnauthorizedHTTPError } from "../../infra/http/errors/unauthorized-http-error";
-import type { AuthProvider, GetUserParams, GetUserResponse, Profile, RefreshTokenResponse, SignInResponse, SignUpResponse } from "./auth-provider";
+import type { AuthProvider, CreateUserParams, GetUserByEmailParams, GetUserParams, GetUserResponse, LinkProviderParams, Profile, RefreshTokenResponse, SignInResponse, SignUpResponse } from "./auth-provider";
 import { getSecretHash } from "./utils/get-secret-hash";
 
 export class AwsCognitoAuthProvider implements AuthProvider {
@@ -19,6 +19,84 @@ export class AwsCognitoAuthProvider implements AuthProvider {
     private readonly clientId: string = env.COGNITO_CLIENT_ID!,
     private readonly poolId: string = env.COGNITO_USER_POOL_ID!,
   ) {}
+
+  async createUser({ email, familyName, givenName, userPoolId }: CreateUserParams): Promise<string> {
+    const command = new AdminCreateUserCommand({
+      UserPoolId: userPoolId,
+      Username: email,
+      MessageAction: 'SUPPRESS',
+      UserAttributes: [
+        { Name: 'given_name', Value: givenName },
+        { Name: 'family_name', Value: familyName },
+        { Name: 'email', Value: email },
+        { Name: 'email_verified', Value: 'true' },
+      ]
+    });
+
+    const { User } = await this.cognito.send(command);
+
+    if (!User) {
+      throw new Error('Failed while trying to create native user');
+    }
+
+    const userId = User.Attributes?.find(({ Name }) => Name === 'sub')?.Value;
+
+    if (!userId) {
+      throw new Error('Failed while trying to create native user');
+    }
+
+    return userId;
+  }
+
+  async getUserByEmail({ email, userPoolId, paginationToken }: GetUserByEmailParams): Promise<string | undefined> {
+
+
+    const command = new ListUsersCommand({
+      UserPoolId: userPoolId,
+      AttributesToGet: ['sub'],
+      Filter: `email = "${email}"`,
+      Limit: 1,
+      PaginationToken: paginationToken
+    });
+
+    const {
+      PaginationToken,
+      Users = []
+    } = await this.cognito.send(command);
+
+    const [user] = Users;
+
+    if (user) {
+      const userId = user.Attributes?.find(({ Name }) => Name === 'sub')?.Value;
+
+      if (!userId) {
+        throw new Error('Failed while trying to create native user');
+      }
+
+      return userId;
+    }
+
+    if (paginationToken) {
+      this.getUserByEmail({ email, userPoolId, paginationToken: PaginationToken })
+    }
+  }
+
+  async linkProvider({ nativeUserId, providerName, providerUserId, userPoolId }: LinkProviderParams): Promise<void> {
+    const command = new AdminLinkProviderForUserCommand({
+      UserPoolId: userPoolId,
+      DestinationUser: {
+        ProviderName: 'Cognito',
+        ProviderAttributeValue: nativeUserId
+      },
+      SourceUser: {
+        ProviderName: providerName,
+        ProviderAttributeValue: providerUserId,
+        ProviderAttributeName: 'Cognito_Subject',
+      },
+    });
+
+    await this.cognito.send(command);
+  }
 
   async resetPassword(params: ResetPasswordSchemaType): Promise<void> {
     const { email, code, newPassword } = params;
