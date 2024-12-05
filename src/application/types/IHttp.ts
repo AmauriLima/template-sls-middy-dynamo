@@ -1,10 +1,16 @@
 export type IBody = Record<string, any>;
 export type IParams = Record<string, string>;
 export type IHeaders = Record<string, string>;
+export type IQuery = Record<string, string>;
 
-export interface IHttpRequest<TBody extends IBody | undefined, TParams extends IParams | undefined> {
+export interface IHttpRequest<
+  TBody extends IBody | undefined,
+  TParams extends IParams | undefined,
+  TQuery extends IQuery | undefined,
+> {
   body: TBody;
   params: TParams;
+  query: TQuery;
   headers?: IHeaders;
   userId?: string;
 }

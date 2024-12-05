@@ -1,6 +1,6 @@
-import { AwsCognitoAuthProvider } from "@/application/shared/providers/auth-provider/aws-cognito-auth-provider";
+import { makeAuthProvider } from "@/application/shared/providers/auth-provider/factories/make-auth-provider";
 import { GetProfileUseCase } from "../get-profile-use-case";
 
 export function makeGetProfileUseCase() {
-  return new GetProfileUseCase(new AwsCognitoAuthProvider());
+  return new GetProfileUseCase(makeAuthProvider());
 }

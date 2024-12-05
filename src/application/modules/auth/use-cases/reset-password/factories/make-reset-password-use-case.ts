@@ -1,6 +1,6 @@
-import { AwsCognitoAuthProvider } from "@/application/shared/providers/auth-provider/aws-cognito-auth-provider";
+import { makeAuthProvider } from "@/application/shared/providers/auth-provider/factories/make-auth-provider";
 import { ResetPasswordUseCase } from "../reset-password-use-case";
 
 export function makeResetPasswordUseCase() {
-  return new ResetPasswordUseCase(new AwsCognitoAuthProvider());
+  return new ResetPasswordUseCase(makeAuthProvider());
 }

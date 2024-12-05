@@ -9,7 +9,7 @@ import { zodHandler, ZodSchemas } from './middlewares/zod-handler';
 import { sanitizeObject } from './utils/sanitize-object';
 
 export function makeHandler(
-    controller: IController<any, any>,
+    controller: IController<any, any, any>,
     schemas?: ZodSchemas
 ) {
   return middy()
@@ -27,6 +27,7 @@ export function makeHandler(
     .handler(async (event) => {
       return controller.handler({
         body: event.body,
+        query: event.queryStringParameters,
         headers: sanitizeObject(event.headers),
         params: sanitizeObject(event.pathParameters),
         userId: event.requestContext.authorizer?.jwt?.claims?.sub

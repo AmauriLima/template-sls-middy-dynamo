@@ -62,7 +62,7 @@ build:
 
 functions:
   cognito-custom-message:
-    handler: src/main/functions/auth/custom-message.handler
+    handler: src/main/functions/auth/triggers/custom-message-trigger.handler
     events:
       - cognitoUserPool:
           pool: UserPool
@@ -76,7 +76,7 @@ functions:
           path: /auth/exchange
           method: POST
   pre-sign-up-trigger:
-    handler: src/main/functions/auth/pre-sign-up-trigger.handler
+    handler: src/main/functions/auth/triggers/pre-sign-up-trigger.handler
     events:
       - cognitoUserPool:
           pool: UserPool

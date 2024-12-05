@@ -6,6 +6,7 @@ import z, { ZodError } from "zod";
 export interface ZodSchemas {
   body?: z.AnyZodObject;
   params?: z.AnyZodObject;
+  query?: z.AnyZodObject;
 }
 
 export function zodHandler(schemas?: ZodSchemas): MiddlewareObj<APIGatewayProxyEventV2> {
@@ -13,9 +14,11 @@ export function zodHandler(schemas?: ZodSchemas): MiddlewareObj<APIGatewayProxyE
     before: (request) => {
       const body = schemas?.body ? schemas.body.parse(request.event.body) : request.event.pathParameters;
       const params = schemas?.params ? schemas.params.parse(request.event.pathParameters) : request.event.pathParameters;
+      const query = schemas?.query ? schemas.query.parse(request.event.queryStringParameters) : request.event.queryStringParameters;
 
       (request.event as any).body = body;
       request.event.pathParameters = params;
+      request.event.queryStringParameters = query;
     },
     onError: (request) => {
       const { error } = request;

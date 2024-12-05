@@ -1,4 +1,4 @@
-import { AwsCognitoAuthProvider } from "@/application/shared/providers/auth-provider/aws-cognito-auth-provider";
+import { makeAuthProvider } from "@/application/shared/providers/auth-provider/factories/make-auth-provider";
 import { PreSignUpTriggerEvent } from "aws-lambda";
 
 export async function handler(event: PreSignUpTriggerEvent) {
@@ -12,7 +12,7 @@ export async function handler(event: PreSignUpTriggerEvent) {
   const { userPoolId, userName } = event;
   const { email, given_name, family_name } = event.request.userAttributes;
 
-  const cognitoAuthProvider = new AwsCognitoAuthProvider();
+  const cognitoAuthProvider = makeAuthProvider();
 
   let nativeUserId = await cognitoAuthProvider.getUserByEmail({ email, userPoolId });
 
